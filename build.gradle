@@ -1,0 +1,74 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'org.jetbrains.kotlin.jvm' version '1.6.20-RC'
+}
+
+group 'me.vadim.util.item'
+version '1.0'
+
+def name_jar = project.name + '.jar'
+def java_ver = '17'
+
+project.buildDir project.projectDir.path + '/target'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+
+    maven { url = "https://hub.spigotmc.org/nexus/content/groups/public/" }
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+dependencies {
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+
+    compileOnly 'io.papermc.paper:paper-api:1.19.3-R0.1-SNAPSHOT'
+}
+
+jar {
+    destinationDirectory.set(project.buildDir)
+    archiveFileName.set(project.name + '-' + project.version + '.jar')
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+compileJava {
+    options.encoding = "UTF-8"
+}
+
+compileKotlin {
+    targetCompatibility java_ver
+    sourceCompatibility java_ver
+
+    kotlinOptions {
+        jvmTarget = java_ver
+        freeCompilerArgs = ['-Xjvm-default=all']
+    }
+}
+
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(java_ver))
+}
+
+tasks.register("sourceJar", Jar) {
+    from(sourceSets.main.allSource)
+    archiveClassifier.set("sources")
+    classifier = "sources"
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            version = project.version.toString()
+            groupId = project.group.toString()
+
+            from components["java"]
+
+            afterEvaluate {
+                artifactId = tasks.jar.archiveBaseName.get()
+            }
+
+            artifact(sourceJar)
+        }
+    }
+}
