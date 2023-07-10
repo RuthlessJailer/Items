@@ -16,7 +16,12 @@ import org.bukkit.inventory.meta.Repairable;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -27,22 +32,23 @@ import java.util.function.Consumer;
  * @see ItemStack
  * @see ItemMeta
  */
+@SuppressWarnings("Deprecation,ConstantValue")
 final class ItemCreator implements ItemBuilder {
 
-	private Material                               material;
-	private ItemStack                              item;
-	private String                                 displayName;
-	private String                                 localizedName;
-	private List<String>                           lore               = new ArrayList<>();
-	private List<ItemFlag>                         flags              = new ArrayList<>();
-	private Map<Enchantment, Integer>              enchantments       = new HashMap<>();
+	private Material material;
+	private ItemStack item;
+	private String displayName;
+	private String localizedName;
+	private List<String> lore = new ArrayList<>();
+	private List<ItemFlag> flags = new ArrayList<>();
+	private Map<Enchantment, Integer> enchantments = new HashMap<>();
 	private Multimap<Attribute, AttributeModifier> attributeModifiers = HashMultimap.create();
-	private PlayerProfile                          playerProfile;
-	private Integer                                customModelData;
-	private boolean                                unbreakable        = false;
-	private int                                    repairCost         = 0;
-	private int                                    damage             = 0;
-	private int                                    amount             = 1;
+	private PlayerProfile playerProfile;
+	private Integer customModelData;
+	private boolean unbreakable = false;
+	private int repairCost = 0;
+	private int damage = 0;
+	private int amount = 1;
 
 	ItemCreator(final Material material) {
 		if (material == null) { throw new NullPointerException("material"); }
@@ -62,12 +68,12 @@ final class ItemCreator implements ItemBuilder {
 	public ItemBuilder meta(final ItemMeta meta) {
 		if (meta == null) { return this; }
 
-		if(meta.hasDisplayName()) displayName(meta.getDisplayName());
-		if(meta.hasLocalizedName()) localizedName(meta.getLocalizedName());
-		if(meta.hasLore()) lore(meta.getLore());
+		if (meta.hasDisplayName()) displayName(meta.getDisplayName());
+		if (meta.hasLocalizedName()) localizedName(meta.getLocalizedName());
+		if (meta.hasLore()) lore(meta.getLore());
 		flags(new ArrayList<>(meta.getItemFlags()));
-		if(meta.hasEnchants()) enchantments(meta.getEnchants());
-		if(meta.hasAttributeModifiers()) attributeModifiers(meta.getAttributeModifiers());
+		if (meta.hasEnchants()) enchantments(meta.getEnchants());
+		if (meta.hasAttributeModifiers()) attributeModifiers(meta.getAttributeModifiers());
 		if (meta.hasCustomModelData()) customModelData(meta.getCustomModelData());
 		unbreakable(meta.isUnbreakable());
 
@@ -97,7 +103,7 @@ final class ItemCreator implements ItemBuilder {
 
 	@Override
 	public ItemBuilder displayName(final String displayName) {
-		this.displayName = displayName;
+		this.displayName = Text.CHAT_COLOR_CLEAR + displayName;
 		return this;
 	}
 
@@ -109,14 +115,26 @@ final class ItemCreator implements ItemBuilder {
 
 	@Override
 	public ItemBuilder lore(final List<String> lore) {
-		this.lore = lore;
-		return this;
+		this.lore.clear();
+		return addLore(lore);
 	}
 
 	@Override
 	public ItemBuilder lore(final String... lore) {
-		this.lore = Arrays.asList(lore);
+		return lore(Arrays.asList(lore));
+	}
+
+	@Override
+	public ItemBuilder addLore(final List<String> lore) {
+		if(this.lore == null)
+			this.lore = new ArrayList<>();
+		this.lore.addAll(lore.stream().map(it -> Text.CHAT_COLOR_CLEAR + it).toList());
 		return this;
+	}
+
+	@Override
+	public ItemBuilder addLore(final String... lore) {
+		return addLore(Arrays.asList(lore));
 	}
 
 	@Override
@@ -126,13 +144,13 @@ final class ItemCreator implements ItemBuilder {
 
 	@Override
 	public ItemBuilder flags(final List<ItemFlag> flags) {
-		this.flags = flags;
+		this.flags = new ArrayList<>(flags);
 		return this;
 	}
 
 	@Override
 	public ItemBuilder flags(final ItemFlag... flags) {
-		this.flags = Arrays.asList(flags);
+		this.flags = new ArrayList<>(Arrays.asList(flags));
 		return this;
 	}
 
@@ -144,7 +162,7 @@ final class ItemCreator implements ItemBuilder {
 
 	@Override
 	public ItemBuilder enchantments(final Map<Enchantment, Integer> enchantments) {
-		this.enchantments = enchantments;
+		this.enchantments = new HashMap<>(enchantments);
 		return this;
 	}
 
@@ -156,9 +174,7 @@ final class ItemCreator implements ItemBuilder {
 
 	@Override
 	public ItemBuilder attributeModifiers(final Multimap<Attribute, AttributeModifier> attributeModifiers) {
-//		this.attributeModifiers = attributeModifiers;
-		this.attributeModifiers.clear();
-		this.attributeModifiers.putAll(attributeModifiers);
+		this.attributeModifiers = HashMultimap.create(attributeModifiers);
 		return this;
 	}
 
@@ -233,15 +249,14 @@ final class ItemCreator implements ItemBuilder {
 	@Override
 	public ItemBuilder editMeta(Consumer<ItemMeta> consumer) {
 		ItemStack item = build();
-		ItemMeta meta = item.getItemMeta();
-		if(meta == null) return this;
+		ItemMeta  meta = item.getItemMeta();
+		if (meta == null) return this;
 		consumer.accept(meta);
 		item.setItemMeta(meta);
 		return item(item);
 	}
 
 	@Override
-	@SuppressWarnings("deprecation")
 	public ItemStack build() {
 		if (this.material == null && this.item == null) throw new NullPointerException("Material or item must be set.");
 
@@ -253,7 +268,7 @@ final class ItemCreator implements ItemBuilder {
 		meta.setDisplayName(Text.colorize(this.displayName));
 		meta.setLocalizedName(this.localizedName);
 		meta.setLore(Text.colorize(this.lore));
-		meta.addItemFlags(this.flags.toArray(new ItemFlag[this.flags.size()]));
+		meta.addItemFlags(this.flags.toArray(ItemFlag[]::new));
 		meta.setAttributeModifiers(this.attributeModifiers);
 		meta.setCustomModelData(this.customModelData);
 		meta.setUnbreakable(this.unbreakable);
@@ -266,4 +281,5 @@ final class ItemCreator implements ItemBuilder {
 
 		return item;
 	}
+
 }

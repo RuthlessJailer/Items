@@ -78,6 +78,10 @@ public interface ItemBuilder {
 
 	ItemBuilder lore(final String... lore);
 
+	ItemBuilder addLore(final List<String> lore);
+
+	ItemBuilder addLore(final String... lore);
+
 	ItemBuilder allFlags();
 
 	ItemBuilder flags(final List<ItemFlag> flags);

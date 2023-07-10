@@ -105,6 +105,16 @@ class ItemBuilderKt(material: Material? = null, item: ItemStack? = null, mutate:
 		return this
 	}
 
+	override fun addLore(lore: MutableList<String>): ItemBuilderKt {
+		builder.addLore(lore)
+		return this
+	}
+
+	override fun addLore(vararg lore: String): ItemBuilderKt {
+		builder.addLore(*lore)
+		return this
+	}
+
 	override fun allFlags(): ItemBuilderKt {
 		builder.allFlags()
 		return this

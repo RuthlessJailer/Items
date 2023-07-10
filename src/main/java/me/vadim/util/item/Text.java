@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
  */
 public final class Text {
 
+	public static final String CHAT_COLOR_CLEAR = ChatColor.WHITE.toString() + ChatColor.RESET.toString();
+
 	public static String flatten(Component component) { return LegacyComponentSerializer.legacySection().serialize(component); }
 	public static String plain(Component component) { return PlainTextComponentSerializer.plainText().serialize(component); }
 

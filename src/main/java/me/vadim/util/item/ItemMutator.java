@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.Repairable;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +31,11 @@ import java.util.function.Consumer;
  * @see ItemMeta
  * @see ItemStack
  */
+@SuppressWarnings("Deprecation,ConstantValue")
 final class ItemMutator implements ItemBuilder {
 
 	private ItemStack item;
-	private ItemMeta  meta;
+	private ItemMeta meta;
 
 	ItemMutator(final ItemStack item) {
 		if (item == null) { throw new NullPointerException("item"); }
@@ -71,30 +73,42 @@ final class ItemMutator implements ItemBuilder {
 
 	@Override
 	public ItemBuilder displayName(final String displayName) {
-		if (meta != null) { meta.setDisplayName(Text.colorize(displayName)); }
+		if (meta != null) { meta.setDisplayName(Text.colorize(Text.CHAT_COLOR_CLEAR + displayName)); }
 		return this;
 	}
 
 	@Override
 	public ItemBuilder localizedName(final String localizedName) {
-		if (meta != null) { meta.setLocalizedName(Text.colorize(localizedName)); }
+		if (meta != null) { meta.setLocalizedName(localizedName); }
 		return this;
 	}
 
 	@Override
 	public ItemBuilder lore(final List<String> lore) {
-		if (meta != null) { meta.setLore(Text.colorize(lore)); }
+		if (meta != null) { meta.setLore(Text.colorize(lore.stream().map(it -> Text.CHAT_COLOR_CLEAR + it).toList())); }
 		return this;
 	}
 
 	@Override
 	public ItemBuilder lore(final String... lore) {
+		return lore(Arrays.asList(lore));
+	}
+
+	@Override
+	public ItemBuilder addLore(final List<String> lore) {
 		if (meta != null) {
 			List<String> append = meta.getLore();
-			if (append != null) { append.addAll(Arrays.asList(lore)); }
-			meta.setLore(Text.colorize(append));
+			if(append == null)
+				append = new ArrayList<>();
+			append.addAll(Text.colorize(lore.stream().map(it -> Text.CHAT_COLOR_CLEAR + it).toList()));
+			meta.setLore(append);
 		}
 		return this;
+	}
+
+	@Override
+	public ItemBuilder addLore(final String... lore) {
+		return addLore(Arrays.asList(lore));
 	}
 
 	@Override
@@ -109,7 +123,7 @@ final class ItemMutator implements ItemBuilder {
 	public ItemBuilder flags(final List<ItemFlag> flags) {
 		if (meta != null) {
 			meta.removeItemFlags(ItemFlag.values());
-			meta.addItemFlags(flags.toArray(new ItemFlag[flags.size()]));
+			meta.addItemFlags(flags.toArray(ItemFlag[]::new));
 		}
 		return this;
 	}
@@ -223,4 +237,5 @@ final class ItemMutator implements ItemBuilder {
 		this.item.setItemMeta(meta);
 		return this.item;
 	}
+
 }
